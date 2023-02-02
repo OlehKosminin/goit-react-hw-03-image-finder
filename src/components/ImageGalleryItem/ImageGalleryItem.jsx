@@ -1,5 +1,6 @@
 import scss from './ImageGalleryItem.module.scss';
 // import { Component } from 'react';
+import PropTypes from 'prop-types';
 
 const ImageGalleryItem = ({ data, onClickModal }) => {
   const Data = data;
@@ -20,3 +21,10 @@ const ImageGalleryItem = ({ data, onClickModal }) => {
 };
 
 export default ImageGalleryItem;
+
+ImageGalleryItem.propTypes = {
+  webformatURL: PropTypes.string.isRequired,
+  largeImageURL: PropTypes.string.isRequired,
+  alt: PropTypes.string.isRequired,
+  handleShowModal: PropTypes.func,
+};
