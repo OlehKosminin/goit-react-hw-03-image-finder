@@ -1,11 +1,11 @@
 import scss from './ImageGallery.module.scss';
 import ImageGalleryItem from '../ImageGalleryItem';
 
-const ImageGallery = ({ data }) => {
-  console.log(data);
+const ImageGallery = ({ data, onClickModal }) => {
+  // console.log(data);
   return (
     <ul className={scss.ImageGallery}>
-      <ImageGalleryItem data={data} />
+      <ImageGalleryItem data={data} onClickModal={onClickModal} />
     </ul>
   );
 };

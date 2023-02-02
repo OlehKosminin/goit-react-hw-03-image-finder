@@ -1,52 +1,49 @@
 import { Component } from 'react';
-import axios from 'axios';
 import ImageGallery from 'components/ImageGallery';
+import ButtonLoadMore from 'components/Button/Button';
+import getImages from 'components/fetch/fetchImg';
+import Notiflix from 'notiflix';
+import Modal from 'components/Modal';
 
 class ApiFetch extends Component {
   state = {
-    searchData: null,
+    searchData: [],
     searchName: null,
     page: 1,
     perPage: 12,
     error: null,
     status: 'idle',
+    largeImageURL: null,
+    showModal: false,
+    imgAlt: null,
   };
 
-  newState = () => {
-    this.setState({ searchName: this.props.searchName });
-  };
+  async componentDidUpdate(prevProps, prevState) {
+    const prevStates = prevProps.searchName;
+    const newSearch = this.props.searchName;
 
-  componentDidUpdate(prevProps) {
-    if (prevProps.searchName !== this.props.searchName) {
-      console.log(this.props.searchName);
+    if (prevStates !== newSearch) {
+      this.setState({ searchName: null, searchData: [], page: 1 });
     }
 
-    const prevState = prevProps.searchName;
-    const newSearch = this.props.searchName;
-    const page = this.state.page;
-    const perPage = this.state.perPage;
-
-    const myKey = `31944414-e4d1ae47e500b71f7e7baa805`;
-    const mySerch = this.props.searchName;
-
-    if (prevState !== newSearch) {
+    if (prevStates !== newSearch || this.state.page !== prevState.page) {
+      // console.log(this.state.page !== prevState.page);
       this.setState({ status: 'pending' });
-      axios
-        .get(
-          `https://pixabay.com/api/?&page=1&key=${myKey}&q=${mySerch}&image_type=photo&orientation=horizontal&per_page=${perPage}&page=${page}`
-        )
-        .then(({ data }) => {
-          return data.hits;
-        })
-        .then(data => {
-          console.log(data);
-          this.setState({ status: 'resolved', searchData: { data } });
-          this.incrementPage();
-          return data;
-        })
-        .catch(error => {
-          this.setState({ status: 'rejected', error });
-        });
+
+      try {
+        const { searchData, searchName, page } = this.state;
+        const data = await getImages(searchName, page);
+        const { hits } = data;
+        // this.setState({ status: 'pending' });
+        await this.setState(() => ({
+          searchData: [...searchData, ...hits],
+          status: 'resolved',
+        }));
+      } catch (error) {
+        this.setState({ error: error.message, status: 'rejected' });
+      } finally {
+        this.setState({ loading: false });
+      }
     }
   }
 
@@ -56,25 +53,54 @@ class ApiFetch extends Component {
     });
   };
 
-  resetPage = () => {
-    this.setState({ page: 1 });
+  onClickModal = largeImageURL => {
+    console.log(largeImageURL);
+    this.setState({ showModal: true, largeImageURL, imgAlt: largeImageURL });
+  };
+
+  // handleShowModal = event => {
+  //   const imgAlt = event.target.alt;
+  //   const largeImageURL = event.target.srcset;
+  //   this.setState({
+  //     showModal: true,
+  //     imgAlt: imgAlt,
+  //     largeImageURL: largeImageURL,
+  //   });
+  // };
+
+  handleCloseModal = () => {
+    this.setState({
+      showModal: false,
+      imgAlt: '',
+      largeImageURL: '',
+    });
   };
 
   render() {
-    const { error, status, searchData } = this.state;
+    const { error, status, searchData, imgAlt, largeImageURL, showModal } =
+      this.state;
+    const { incrementPage, onClickModal, handleCloseModal } = this;
 
-    if (status === 'idle') {
-      return <div>Choise your picture</div>;
-    }
-    if (status === 'pending') {
-      return <div>Loading...</div>;
-    }
-    if (status === 'rejected') {
-      return <h1>{error}</h1>;
-    }
-    if (status === 'resolved') {
-      return <ImageGallery data={searchData} />;
-    }
+    return (
+      <>
+        {searchData.length > 0 && (
+          <ImageGallery data={searchData} onClickModal={onClickModal} />
+        )}
+        {status === 'rejected' && <h1>{error}</h1>}
+        {status === 'resolved' && (
+          <ButtonLoadMore incrementPage={incrementPage} />
+        )}
+        {status === 'pending' && Notiflix.Loading.pulse()}
+        {status !== 'pending' && Notiflix.Loading.remove()}
+        {showModal && (
+          <Modal
+            imgAlt={imgAlt}
+            imgLargeSrc={largeImageURL}
+            onModalClose={handleCloseModal}
+          />
+        )}
+      </>
+    );
   }
 }
 

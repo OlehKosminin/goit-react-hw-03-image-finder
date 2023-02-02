@@ -1,7 +1,10 @@
 import scss from './ImageGalleryItem.module.scss';
+// import { Component } from 'react';
 
-const ImageGalleryItem = ({ data }) => {
-  const Data = data.data;
+const ImageGalleryItem = ({ data, onClickModal }) => {
+  const Data = data;
+  // console.log('Data: ', Data);
+
   return Data.map(({ id, webformatURL, largeImageURL }) => {
     return (
       <li key={id} className={scss.ImageGalleryItem}>
@@ -9,6 +12,7 @@ const ImageGalleryItem = ({ data }) => {
           src={webformatURL}
           alt={largeImageURL}
           className={scss.ImageGalleryItemImage}
+          onClick={() => onClickModal(largeImageURL)}
         />
       </li>
     );
